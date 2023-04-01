@@ -1,0 +1,107 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Annotation Tool</title>
+    <style>
+        .highlight {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <form>
+        <label for="labels">Labels:</label>
+        <input type="text" id="labels" name="labels">
+        <button type="submit" id="submit-labels">Submit</button>
+    </form>
+    <br>
+    <label for="select-label">Select Label:</label>
+    <select id="select-label">
+    </select>
+    <br>
+    <label for="document-text">Document Text:</label>
+    <br>
+    <textarea id="document-text" rows="10" cols="50"></textarea>
+    <br>
+    <button id="export-annotations">Export Annotations</button>
+</body>
+    <script>
+        let annotations = [];
+        const selectLabel = document.getElementById('select-label');
+        const documentText = document.getElementById('document-text');
+
+        // Highlight and select text in the document
+        documentText.addEventListener('mouseup', () => {
+            const selection = document.getSelection();
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString();
+            const start = range.startOffset;
+            const end = range.endOffset;
+            const startNode = range.startContainer.parentNode;
+            const endNode = range.endContainer.parentNode;
+
+            // Find the selected word or sentence
+            let selectedNode = startNode;
+            while (selectedNode !== documentText && !selectedNode.nextSibling && !selectedNode.previousSibling) {
+                selectedNode = selectedNode.parentNode;
+            }
+
+            // Check if the selected text is within a word or sentence
+            if (selectedNode.innerText.includes(selectedText)) {
+                const selectedSentence = selectedNode.innerText.trim();
+                const sentenceStart = selectedNode.innerText.indexOf(selectedText);
+                const sentenceEnd = sentenceStart + selectedText.length;
+                const newAnnotation = {
+                    start: sentenceStart,
+                    end: sentenceEnd,
+                    label: selectLabel.value,
+                    annotated_text: selectedSentence
+                };
+                annotations.push(newAnnotation);
+                const highlightedText = document.createElement('span');
+                highlightedText.classList.add('highlight');
+                range.surroundContents(highlightedText);
+            }
+        });
+
+        // Fetch labels from the backend
+        fetch('/labels/')
+            .then(response => response.json())
+            .then(labels => {
+                labels.forEach(label => {
+                    const option = document.createElement('option');
+                    option.value = label;
+                    option.text = label;
+                    selectLabel.appendChild(option);
+                });
+            });
+
+        // Submit the labels list to the backend
+        const labelsForm = document.querySelector('form');
+        labelsForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const labelsInput = document.getElementById('labels');
+            const labels = labelsInput.value.split(',');
+            fetch('/labels/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(labels)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Labels saved:', data);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Export annotations for the current document
+        const exportAnnotationsButton = document.getElementById('export-annotations');
+        exportAnnotationsButton.addEventListener('click', () => {
+            const documentId = 1; // Replace with the current document ID
+            fetch(`/documents/${documentId}/annotations/`)
+        });
+   </script>     

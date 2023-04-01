@@ -1,0 +1,15 @@
+<h2>Enter Labels</h2>
+<form (ngSubmit)="submitLabels()">
+  <div class="form-group">
+    <label for="labels">Labels:</label>
+    <input type="text" class="form-control" id="labels" [(ngModel)]="labels" name="labels">
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<h2>Select Label</h2>
+<div class="form-group">
+  <label for="labelSelect">Label:</label>
+  <select class="form-control" id="labelSelect" [(ngModel)]="selectedLabel" name="label">
+    <option *ngFor="let label of labelsList" [value]="label">{{ label }}</option>
+  </select>
+</div>
